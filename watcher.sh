@@ -15,12 +15,16 @@ restarts_max=3
 while true
  do
   pod_name=$(kubectl get po -o name -n $namespace -l app=$deployment_name)
-  if [ -z $pod_name ]
-  restarts=$(kubectl -n $namespace get $pod_name -o jsonpath='{.status.containerStatuses[].restartCount}')
-  echo "$pod_name: $restarts"
-  if [ "$restarts" -gt "$restarts_max" ];then
-    echo "Maximum number of restarts reached: scaling down to 0"
-    kubectl -n $namespace scale deploy/$deployment_name --replicas=0
-  fi
-  sleep 60
+  if [ -z $pod_name ];then
+    echo 'Waiting for new pod to be created ...'
+    sleep 1
+  else
+    restarts=$(kubectl -n $namespace get $pod_name -o jsonpath='{.status.containerStatuses[].restartCount}')
+    echo "$pod_name: $restarts"
+    if [ "$restarts" -gt "$restarts_max" ];then
+      echo "Maximum number of restarts reached: scaling down to 0"
+      kubectl -n $namespace scale deploy/$deployment_name --replicas=0
+    fi
+    sleep 60
+  fi 
  done
